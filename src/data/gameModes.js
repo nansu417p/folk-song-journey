@@ -8,7 +8,7 @@ export const gameModes = [
   },
   {
     id: 'ar',
-    title: "AR 互動",
+    title: "手勢抓取",
     description: "伸手觸碰民歌意境",
     color: "bg-folk-green",
     icon: "🖐️"
@@ -20,6 +20,29 @@ export const gameModes = [
     color: "bg-folk-gold",
     icon: "🎨"
   },
+  {
+    id: '3d',
+    title: "時光宿舍",
+    description: "探索 80 年代的空間",
+    color: "bg-indigo-500",
+    icon: "🏠"
+  },
+  {
+    id: 'audio-ar',
+    title: "聽見民歌",
+    description: "讓旋律在空間中綻放",
+    color: "bg-pink-500",
+    icon: "🎵"
+  },
+  // ↓↓↓ 將這個移到這裡 ↓↓↓
+  {
+    id: 'karaoke',
+    title: "民歌接龍",
+    description: "用聲音喚醒記憶",
+    color: "bg-blue-500",
+    icon: "🎙️"
+  },
+  // ↑↑↑ 移到這裡 ↑↑↑
   {
     id: 'dev1',
     title: "開發中",

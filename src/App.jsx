@@ -9,17 +9,20 @@ import TrainPage from './components/Train/TrainPage';
 import LyricsGame from './components/Games/LyricsGame/LyricsGame';
 import ArGame from './components/Games/ArGame/ArGame'; 
 import AiCoverGame from './components/Games/AiCoverGame/AiCoverGame'; 
+import DormGame from './components/Games/DormGame/DormGame'; 
+import AudioArGame from './components/Games/AudioArGame/AudioArGame'; 
+import KaraokeGame from './components/Games/KaraokeGame/KaraokeGame'; // 1. 引入
 
 function App() {
   const [activeMode, setActiveMode] = useState(null); 
   
-  // 歌詞遊戲的狀態
+  // 各遊戲的選歌狀態
   const [lyricsGameSong, setLyricsGameSong] = useState(null); 
-  
-  // !!! 修正重點：這一行一定要有，不然會報錯 "aiGameSong is not defined" !!!
   const [aiGameSong, setAiGameSong] = useState(null);
+  const [audioArSong, setAudioArSong] = useState(null);
+  const [karaokeSong, setKaraokeSong] = useState(null); // 2. 新增狀態
 
-  // 捲動 Ref
+  const homeSectionRef = useRef(null);
   const trainSectionRef = useRef(null);
   const gameSectionRef = useRef(null);
 
@@ -27,29 +30,33 @@ function App() {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // 選擇模式
+  const handleBackToHome = () => {
+    scrollTo(homeSectionRef);
+  };
+
   const handleModeSelect = (mode) => {
     if (mode.locked) return;
     setActiveMode(mode.id);
     
-    // 重置所有遊戲狀態，確保切換時是乾淨的
+    // 重置所有狀態
     setLyricsGameSong(null);
     setAiGameSong(null);
+    setAudioArSong(null);
+    setKaraokeSong(null); // 重置接龍狀態
 
-    // 延遲一點點捲動，讓畫面渲染完成
     setTimeout(() => scrollTo(gameSectionRef), 100);
   };
 
-  // 歌詞遊戲：選擇歌曲
-  const handleLyricsSongSelect = (song) => {
-    setLyricsGameSong(song);
+  // 通用選歌處理器 (為了讓程式碼乾淨一點)
+  const handleSongSelect = (song, setSongState) => {
+    setSongState(song);
   };
 
   return (
     <div className="w-full min-h-screen bg-folk-bg text-folk-dark font-serif overflow-x-hidden flex flex-col">
       
-      {/* --- Section 1: 首頁 --- */}
-      <section className="h-screen w-full flex flex-col items-center justify-center relative bg-folk-bg shrink-0">
+      {/* Section 1: 首頁 */}
+      <section ref={homeSectionRef} className="h-screen w-full flex flex-col items-center justify-center relative bg-folk-bg shrink-0">
         <motion.div 
           initial={{ opacity: 0, y: 30 }} 
           animate={{ opacity: 1, y: 0 }} 
@@ -66,33 +73,27 @@ function App() {
         </motion.div>
       </section>
 
-      {/* --- Section 2: 火車模式選擇 --- */}
+      {/* Section 2: 火車模式選擇 */}
       <section ref={trainSectionRef} className="h-screen w-full relative shrink-0">
         <TrainPage 
           onSelectMode={handleModeSelect} 
-          onBack={() => window.scrollTo({top: 0, behavior: 'smooth'})} 
+          onBack={handleBackToHome} 
         />
       </section>
 
-      {/* --- Section 3: 互動/遊戲區 --- */}
+      {/* Section 3: 互動/遊戲區 */}
       <section ref={gameSectionRef} className="h-screen w-full bg-gray-900 flex flex-col items-center justify-center relative shrink-0 overflow-hidden">
         
-        {/* 未選擇模式時 */}
         {!activeMode && (
           <div className="text-gray-500 text-2xl tracking-widest">
             請先在上方火車選擇一種體驗...
           </div>
         )}
 
-        {/* 模式 A: AR 遊戲 */}
+        {/* 模式 A: 手勢 AR */}
         {activeMode === 'ar' && (
            <div className="w-full h-full relative">
-             <button 
-               onClick={() => scrollTo(trainSectionRef)}
-               className="absolute top-6 left-6 z-50 px-6 py-2 bg-black text-white border border-white/30 rounded-full hover:bg-white hover:text-black transition font-bold shadow-lg"
-             >
-               ↑ 返回火車
-             </button>
+             <button onClick={() => scrollTo(trainSectionRef)} className="absolute top-6 left-6 z-50 px-6 py-2 bg-black text-white border border-white/30 rounded-full hover:bg-white hover:text-black transition font-bold shadow-lg">↑ 返回火車</button>
              <ArGame />
            </div>
         )}
@@ -101,41 +102,10 @@ function App() {
         {activeMode === 'lyrics' && (
           <div className="w-full h-full flex flex-col items-center justify-center">
             {!lyricsGameSong ? (
-              // 選歌介面
-              <div className="w-full max-w-6xl px-4 z-10 flex flex-col items-center">
-                 <button onClick={() => scrollTo(trainSectionRef)} className="self-start text-white mb-6 hover:underline text-lg">↑ 返回火車</button>
-                 <h2 className="text-4xl text-white font-bold mb-12 tracking-wider">請選擇一首歌曲進行填詞</h2>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
-                    {folkSongs.map((song) => (
-                      <div 
-                        key={song.id}
-                        onClick={() => handleLyricsSongSelect(song)}
-                        className="bg-white rounded-xl hover:bg-yellow-50 cursor-pointer transition-transform hover:-translate-y-2 shadow-2xl flex overflow-hidden h-40 border-4 border-transparent hover:border-yellow-400"
-                      >
-                        <div className={`w-6 h-full ${['bg-red-500', 'bg-blue-500', 'bg-green-500'][Math.floor(Math.random()*3)]}`}></div>
-                        <div className="p-6 flex flex-col justify-center flex-1">
-                          <h3 className="text-2xl font-bold text-gray-800">{song.title}</h3>
-                          <p className="text-gray-500 text-lg mt-1">{song.singer}</p>
-                        </div>
-                        <div className="w-24 bg-gray-100 flex items-center justify-center border-l border-dashed border-gray-300">
-                           <div className="flex gap-2">
-                             <div className="w-3 h-3 bg-gray-800 rounded-full animate-spin-slow"></div>
-                             <div className="w-3 h-3 bg-gray-800 rounded-full animate-spin-slow"></div>
-                           </div>
-                        </div>
-                      </div>
-                    ))}
-                 </div>
-              </div>
+              <SongSelector title="請選擇一首歌曲進行填詞" onSelect={(s) => handleSongSelect(s, setLyricsGameSong)} onBack={() => scrollTo(trainSectionRef)} icon="📝" color="bg-red-500" />
             ) : (
-              // 遊戲進行中
               <div className="w-full h-full relative">
-                 <button 
-                   onClick={() => setLyricsGameSong(null)}
-                   className="absolute top-6 left-6 z-50 px-6 py-2 bg-black text-white border border-white/30 rounded-full hover:bg-white hover:text-black transition font-bold shadow-lg"
-                 >
-                   ← 重選歌曲
-                 </button>
+                 <button onClick={() => setLyricsGameSong(null)} className="absolute top-6 left-6 z-50 px-6 py-2 bg-black text-white border border-white/30 rounded-full hover:bg-white hover:text-black transition font-bold shadow-lg">← 重選歌曲</button>
                  <LyricsGame song={lyricsGameSong} onRestart={() => setLyricsGameSong(null)} />
               </div>
             )}
@@ -146,33 +116,43 @@ function App() {
         {activeMode === 'ai' && (
            <div className="w-full h-full flex flex-col items-center justify-center">
              {!aiGameSong ? (
-               // 選歌介面
-               <div className="w-full max-w-6xl px-4 z-10 flex flex-col items-center">
-                  <button onClick={() => scrollTo(trainSectionRef)} className="self-start text-white mb-6 hover:underline text-lg">↑ 返回火車</button>
-                  <h2 className="text-4xl text-white font-bold mb-12 tracking-wider">請選擇要製作封面的歌曲</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
-                     {folkSongs.map((song) => (
-                       <div 
-                         key={song.id}
-                         onClick={() => setAiGameSong(song)}
-                         className="bg-white rounded-xl hover:bg-yellow-50 cursor-pointer transition-transform hover:-translate-y-2 shadow-2xl flex overflow-hidden h-40 border-4 border-transparent hover:border-yellow-400"
-                       >
-                         <div className="w-6 h-full bg-purple-500"></div>
-                         <div className="p-6 flex flex-col justify-center flex-1">
-                           <h3 className="text-2xl font-bold text-gray-800">{song.title}</h3>
-                           <p className="text-gray-500 text-lg mt-1">{song.singer}</p>
-                         </div>
-                         <div className="w-24 bg-gray-100 flex items-center justify-center text-4xl">
-                            🎨
-                         </div>
-                       </div>
-                     ))}
-                  </div>
-               </div>
+               <SongSelector title="請選擇要製作封面的歌曲" onSelect={(s) => handleSongSelect(s, setAiGameSong)} onBack={() => scrollTo(trainSectionRef)} icon="🎨" color="bg-purple-500" />
              ) : (
-               // 遊戲進行中
                <div className="w-full h-full relative">
                   <AiCoverGame song={aiGameSong} onBack={() => setAiGameSong(null)} />
+               </div>
+             )}
+           </div>
+        )}
+
+        {/* 模式 D: 3D 時光宿舍 */}
+        {activeMode === '3d' && (
+           <div className="w-full h-full relative">
+             <DormGame onBack={() => scrollTo(trainSectionRef)} />
+           </div>
+        )}
+
+        {/* 模式 E: 聲音視覺化 AR */}
+        {activeMode === 'audio-ar' && (
+           <div className="w-full h-full flex flex-col items-center justify-center">
+             {!audioArSong ? (
+               <SongSelector title="請選擇要聆聽的歌曲" onSelect={(s) => handleSongSelect(s, setAudioArSong)} onBack={() => scrollTo(trainSectionRef)} icon="🎵" color="bg-pink-500" />
+             ) : (
+               <div className="w-full h-full relative">
+                  <AudioArGame song={audioArSong} onBack={() => setAudioArSong(null)} />
+               </div>
+             )}
+           </div>
+        )}
+
+        {/* 模式 F: 民歌接龍 (新增！) */}
+        {activeMode === 'karaoke' && (
+           <div className="w-full h-full flex flex-col items-center justify-center">
+             {!karaokeSong ? (
+               <SongSelector title="請選擇歌曲開始接龍" onSelect={(s) => handleSongSelect(s, setKaraokeSong)} onBack={() => scrollTo(trainSectionRef)} icon="🎙️" color="bg-blue-500" />
+             ) : (
+               <div className="w-full h-full relative">
+                  <KaraokeGame song={karaokeSong} onBack={() => setKaraokeSong(null)} />
                </div>
              )}
            </div>
@@ -183,5 +163,22 @@ function App() {
     </div>
   );
 }
+
+// 為了讓程式碼更乾淨，我把重複的選歌介面提取出來了
+const SongSelector = ({ title, onSelect, onBack, icon, color }) => (
+  <div className="w-full max-w-6xl px-4 z-10 flex flex-col items-center">
+    <button onClick={onBack} className="self-start text-white mb-6 hover:underline text-lg">↑ 返回火車</button>
+    <h2 className="text-4xl text-white font-bold mb-12 tracking-wider">{title}</h2>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+      {folkSongs.map((song) => (
+        <div key={song.id} onClick={() => onSelect(song)} className={`bg-white rounded-xl hover:bg-gray-100 cursor-pointer transition-transform hover:-translate-y-2 shadow-2xl flex overflow-hidden h-40 border-4 border-transparent hover:border-white`}>
+          <div className={`w-6 h-full ${color}`}></div>
+          <div className="p-6 flex flex-col justify-center flex-1"><h3 className="text-2xl font-bold text-gray-800">{song.title}</h3><p className="text-gray-500 text-lg mt-1">{song.singer}</p></div>
+          <div className="w-24 bg-gray-100 flex items-center justify-center text-4xl">{icon}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 export default App;

@@ -8,10 +8,16 @@ import { folkSongs } from './data/folkSongs';
 import TrainPage from './components/Train/TrainPage';
 import LyricsGame from './components/Games/LyricsGame/LyricsGame';
 import ArGame from './components/Games/ArGame/ArGame'; 
+import AiCoverGame from './components/Games/AiCoverGame/AiCoverGame'; 
 
 function App() {
-  const [activeMode, setActiveMode] = useState(null); // 'lyrics', 'ar', 'ai'
+  const [activeMode, setActiveMode] = useState(null); 
+  
+  // 歌詞遊戲的狀態
   const [lyricsGameSong, setLyricsGameSong] = useState(null); 
+  
+  // !!! 修正重點：這一行一定要有，不然會報錯 "aiGameSong is not defined" !!!
+  const [aiGameSong, setAiGameSong] = useState(null);
 
   // 捲動 Ref
   const trainSectionRef = useRef(null);
@@ -26,17 +32,12 @@ function App() {
     if (mode.locked) return;
     setActiveMode(mode.id);
     
-    if (mode.id === 'ar') {
-      setLyricsGameSong(null);
-      setTimeout(() => scrollTo(gameSectionRef), 100);
-    } 
-    else if (mode.id === 'lyrics') {
-      setLyricsGameSong(null); 
-      setTimeout(() => scrollTo(gameSectionRef), 100);
-    }
-    else if (mode.id === 'ai') {
-      setTimeout(() => scrollTo(gameSectionRef), 100);
-    }
+    // 重置所有遊戲狀態，確保切換時是乾淨的
+    setLyricsGameSong(null);
+    setAiGameSong(null);
+
+    // 延遲一點點捲動，讓畫面渲染完成
+    setTimeout(() => scrollTo(gameSectionRef), 100);
   };
 
   // 歌詞遊戲：選擇歌曲
@@ -45,8 +46,7 @@ function App() {
   };
 
   return (
-    // 修改這裡：改用 w-screen 確保強制滿版，min-h-screen 確保高度
-    <div className="w-screen min-h-screen bg-folk-bg text-folk-dark font-serif overflow-x-hidden flex flex-col m-0 p-0">
+    <div className="w-full min-h-screen bg-folk-bg text-folk-dark font-serif overflow-x-hidden flex flex-col">
       
       {/* --- Section 1: 首頁 --- */}
       <section className="h-screen w-full flex flex-col items-center justify-center relative bg-folk-bg shrink-0">
@@ -77,13 +77,14 @@ function App() {
       {/* --- Section 3: 互動/遊戲區 --- */}
       <section ref={gameSectionRef} className="h-screen w-full bg-gray-900 flex flex-col items-center justify-center relative shrink-0 overflow-hidden">
         
+        {/* 未選擇模式時 */}
         {!activeMode && (
           <div className="text-gray-500 text-2xl tracking-widest">
             請先在上方火車選擇一種體驗...
           </div>
         )}
 
-        {/* AR 遊戲 */}
+        {/* 模式 A: AR 遊戲 */}
         {activeMode === 'ar' && (
            <div className="w-full h-full relative">
              <button 
@@ -96,14 +97,14 @@ function App() {
            </div>
         )}
 
-        {/* 歌詞遊戲 */}
+        {/* 模式 B: 歌詞遊戲 */}
         {activeMode === 'lyrics' && (
           <div className="w-full h-full flex flex-col items-center justify-center">
             {!lyricsGameSong ? (
+              // 選歌介面
               <div className="w-full max-w-6xl px-4 z-10 flex flex-col items-center">
                  <button onClick={() => scrollTo(trainSectionRef)} className="self-start text-white mb-6 hover:underline text-lg">↑ 返回火車</button>
                  <h2 className="text-4xl text-white font-bold mb-12 tracking-wider">請選擇一首歌曲進行填詞</h2>
-                 
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
                     {folkSongs.map((song) => (
                       <div 
@@ -127,6 +128,7 @@ function App() {
                  </div>
               </div>
             ) : (
+              // 遊戲進行中
               <div className="w-full h-full relative">
                  <button 
                    onClick={() => setLyricsGameSong(null)}
@@ -140,8 +142,40 @@ function App() {
           </div>
         )}
 
+        {/* 模式 C: AI 封面 */}
         {activeMode === 'ai' && (
-           <div className="text-white text-2xl">AI 封面功能開發中...</div>
+           <div className="w-full h-full flex flex-col items-center justify-center">
+             {!aiGameSong ? (
+               // 選歌介面
+               <div className="w-full max-w-6xl px-4 z-10 flex flex-col items-center">
+                  <button onClick={() => scrollTo(trainSectionRef)} className="self-start text-white mb-6 hover:underline text-lg">↑ 返回火車</button>
+                  <h2 className="text-4xl text-white font-bold mb-12 tracking-wider">請選擇要製作封面的歌曲</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                     {folkSongs.map((song) => (
+                       <div 
+                         key={song.id}
+                         onClick={() => setAiGameSong(song)}
+                         className="bg-white rounded-xl hover:bg-yellow-50 cursor-pointer transition-transform hover:-translate-y-2 shadow-2xl flex overflow-hidden h-40 border-4 border-transparent hover:border-yellow-400"
+                       >
+                         <div className="w-6 h-full bg-purple-500"></div>
+                         <div className="p-6 flex flex-col justify-center flex-1">
+                           <h3 className="text-2xl font-bold text-gray-800">{song.title}</h3>
+                           <p className="text-gray-500 text-lg mt-1">{song.singer}</p>
+                         </div>
+                         <div className="w-24 bg-gray-100 flex items-center justify-center text-4xl">
+                            🎨
+                         </div>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+             ) : (
+               // 遊戲進行中
+               <div className="w-full h-full relative">
+                  <AiCoverGame song={aiGameSong} onBack={() => setAiGameSong(null)} />
+               </div>
+             )}
+           </div>
         )}
 
       </section>

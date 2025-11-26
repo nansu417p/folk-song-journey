@@ -11,16 +11,16 @@ import ArGame from './components/Games/ArGame/ArGame';
 import AiCoverGame from './components/Games/AiCoverGame/AiCoverGame'; 
 import DormGame from './components/Games/DormGame/DormGame'; 
 import AudioArGame from './components/Games/AudioArGame/AudioArGame'; 
-import KaraokeGame from './components/Games/KaraokeGame/KaraokeGame'; // 1. 引入
+import KaraokeGame from './components/Games/KaraokeGame/KaraokeGame'; 
+import PhotoBoothGame from './components/Games/PhotoBoothGame/PhotoBoothGame'; // 1. 引入
 
 function App() {
   const [activeMode, setActiveMode] = useState(null); 
   
-  // 各遊戲的選歌狀態
   const [lyricsGameSong, setLyricsGameSong] = useState(null); 
   const [aiGameSong, setAiGameSong] = useState(null);
   const [audioArSong, setAudioArSong] = useState(null);
-  const [karaokeSong, setKaraokeSong] = useState(null); // 2. 新增狀態
+  const [karaokeSong, setKaraokeSong] = useState(null); 
 
   const homeSectionRef = useRef(null);
   const trainSectionRef = useRef(null);
@@ -42,14 +42,13 @@ function App() {
     setLyricsGameSong(null);
     setAiGameSong(null);
     setAudioArSong(null);
-    setKaraokeSong(null); // 重置接龍狀態
+    setKaraokeSong(null);
 
     setTimeout(() => scrollTo(gameSectionRef), 100);
   };
 
-  // 通用選歌處理器 (為了讓程式碼乾淨一點)
-  const handleSongSelect = (song, setSongState) => {
-    setSongState(song);
+  const handleLyricsSongSelect = (song) => {
+    setLyricsGameSong(song);
   };
 
   return (
@@ -102,7 +101,7 @@ function App() {
         {activeMode === 'lyrics' && (
           <div className="w-full h-full flex flex-col items-center justify-center">
             {!lyricsGameSong ? (
-              <SongSelector title="請選擇一首歌曲進行填詞" onSelect={(s) => handleSongSelect(s, setLyricsGameSong)} onBack={() => scrollTo(trainSectionRef)} icon="📝" color="bg-red-500" />
+              <SongSelector title="請選擇一首歌曲進行填詞" onSelect={(s) => handleLyricsSongSelect(s)} onBack={() => scrollTo(trainSectionRef)} icon="📝" color="bg-red-500" />
             ) : (
               <div className="w-full h-full relative">
                  <button onClick={() => setLyricsGameSong(null)} className="absolute top-6 left-6 z-50 px-6 py-2 bg-black text-white border border-white/30 rounded-full hover:bg-white hover:text-black transition font-bold shadow-lg">← 重選歌曲</button>
@@ -116,7 +115,7 @@ function App() {
         {activeMode === 'ai' && (
            <div className="w-full h-full flex flex-col items-center justify-center">
              {!aiGameSong ? (
-               <SongSelector title="請選擇要製作封面的歌曲" onSelect={(s) => handleSongSelect(s, setAiGameSong)} onBack={() => scrollTo(trainSectionRef)} icon="🎨" color="bg-purple-500" />
+               <SongSelector title="請選擇要製作封面的歌曲" onSelect={(s) => setAiGameSong(s)} onBack={() => scrollTo(trainSectionRef)} icon="🎨" color="bg-purple-500" />
              ) : (
                <div className="w-full h-full relative">
                   <AiCoverGame song={aiGameSong} onBack={() => setAiGameSong(null)} />
@@ -136,7 +135,7 @@ function App() {
         {activeMode === 'audio-ar' && (
            <div className="w-full h-full flex flex-col items-center justify-center">
              {!audioArSong ? (
-               <SongSelector title="請選擇要聆聽的歌曲" onSelect={(s) => handleSongSelect(s, setAudioArSong)} onBack={() => scrollTo(trainSectionRef)} icon="🎵" color="bg-pink-500" />
+               <SongSelector title="請選擇要聆聽的歌曲" onSelect={(s) => setAudioArSong(s)} onBack={() => scrollTo(trainSectionRef)} icon="🎵" color="bg-pink-500" />
              ) : (
                <div className="w-full h-full relative">
                   <AudioArGame song={audioArSong} onBack={() => setAudioArSong(null)} />
@@ -145,16 +144,23 @@ function App() {
            </div>
         )}
 
-        {/* 模式 F: 民歌接龍 (新增！) */}
+        {/* 模式 F: 民歌接龍 */}
         {activeMode === 'karaoke' && (
            <div className="w-full h-full flex flex-col items-center justify-center">
              {!karaokeSong ? (
-               <SongSelector title="請選擇歌曲開始接龍" onSelect={(s) => handleSongSelect(s, setKaraokeSong)} onBack={() => scrollTo(trainSectionRef)} icon="🎙️" color="bg-blue-500" />
+               <SongSelector title="請選擇歌曲開始接龍" onSelect={(s) => setKaraokeSong(s)} onBack={() => scrollTo(trainSectionRef)} icon="🎙️" color="bg-blue-500" />
              ) : (
                <div className="w-full h-full relative">
                   <KaraokeGame song={karaokeSong} onBack={() => setKaraokeSong(null)} />
                </div>
              )}
+           </div>
+        )}
+
+        {/* 模式 G: 封面拍照 (新增！) */}
+        {activeMode === 'photobooth' && (
+           <div className="w-full h-full relative">
+             <PhotoBoothGame onBack={() => scrollTo(trainSectionRef)} />
            </div>
         )}
 
@@ -164,7 +170,7 @@ function App() {
   );
 }
 
-// 為了讓程式碼更乾淨，我把重複的選歌介面提取出來了
+// 重用選歌介面
 const SongSelector = ({ title, onSelect, onBack, icon, color }) => (
   <div className="w-full max-w-6xl px-4 z-10 flex flex-col items-center">
     <button onClick={onBack} className="self-start text-white mb-6 hover:underline text-lg">↑ 返回火車</button>

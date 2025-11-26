@@ -51,6 +51,14 @@ export const gameModes = [
     color: "bg-teal-600", // 復古青色
     icon: "📸"
   },
+  // 新增：心情列車 (結合 3D 與表情辨識的旗艦功能)
+  {
+    id: 'mood-train',
+    title: "心情列車",
+    description: "通往內心的時光鐵道",
+    color: "bg-indigo-600", 
+    icon: "🚂"
+  },
   {
     id: 'dev1',
     title: "開發中",

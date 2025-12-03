@@ -13,7 +13,8 @@ import DormGame from './components/Games/DormGame/DormGame';
 import AudioArGame from './components/Games/AudioArGame/AudioArGame'; 
 import KaraokeGame from './components/Games/KaraokeGame/KaraokeGame'; 
 import PhotoBoothGame from './components/Games/PhotoBoothGame/PhotoBoothGame'; 
-import MoodTrainGame from './components/Games/MoodTrainGame/MoodTrainGame'; // 1. 引入
+import MoodTrainGame from './components/Games/MoodTrainGame/MoodTrainGame'; 
+import FaceSwapGame from './components/Games/FaceSwapGame/FaceSwapGame';
 
 function App() {
   const [activeMode, setActiveMode] = useState(null); 
@@ -161,6 +162,11 @@ function App() {
              {/* 這個模式不需要先選歌，直接進 3D 場景 */}
              <MoodTrainGame onBack={() => scrollTo(trainSectionRef)} />
            </div>
+        )}
+                {activeMode === 'faceswap' && (
+          <div className="w-full h-full relative">
+            <FaceSwapGame onBack={() => scrollTo(trainSectionRef)} />
+          </div>
         )}
 
       </section>

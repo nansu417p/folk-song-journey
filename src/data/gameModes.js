@@ -59,6 +59,14 @@ export const gameModes = [
     color: "bg-indigo-600", 
     icon: "🚂"
   },
+  // 新增：AI 換臉 (Faceswap)
+  {
+    id: 'faceswap',
+    title: "時光變臉",
+    description: "成為經典專輯主角",
+    color: "bg-rose-700", // 深紅色
+    icon: "🎭"
+  },
   {
     id: 'dev1',
     title: "開發中",

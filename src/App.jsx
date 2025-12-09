@@ -14,14 +14,21 @@ import AudioArGame from './components/Games/AudioArGame/AudioArGame';
 import KaraokeGame from './components/Games/KaraokeGame/KaraokeGame'; 
 import PhotoBoothGame from './components/Games/PhotoBoothGame/PhotoBoothGame'; 
 import MoodTrainGame from './components/Games/MoodTrainGame/MoodTrainGame'; 
-import FaceSwapGame from './components/Games/FaceSwapGame/FaceSwapGame';
+import FaceSwapGame from './components/Games/FaceSwapGame/FaceSwapGame'; // 原本的 A1111 版
+import FaceSwapComfy from './components/Games/FaceSwapGame/FaceSwapComfy'; // 新增 ComfyUI 版
+import CapsuleGame from './components/Games/CapsuleGame/CapsuleGame'; 
+import AiCoverGame_zimage from './components/Games/AiCoverGame/AiCoverGame_zimage'; // 新增 ComfyUI 版
 
 function App() {
   const [activeMode, setActiveMode] = useState(null); 
+  
+  // 各遊戲選歌狀態
   const [lyricsGameSong, setLyricsGameSong] = useState(null); 
   const [aiGameSong, setAiGameSong] = useState(null);
+  const [zimageSong, setZimageSong] = useState(null); // 新增
   const [audioArSong, setAudioArSong] = useState(null);
   const [karaokeSong, setKaraokeSong] = useState(null); 
+  const [capsuleSong, setCapsuleSong] = useState(null); 
 
   const homeSectionRef = useRef(null);
   const trainSectionRef = useRef(null);
@@ -42,8 +49,10 @@ function App() {
     // 重置所有狀態
     setLyricsGameSong(null);
     setAiGameSong(null);
+    setZimageSong(null);
     setAudioArSong(null);
     setKaraokeSong(null);
+    setCapsuleSong(null);
 
     setTimeout(() => scrollTo(gameSectionRef), 100);
   };
@@ -52,7 +61,7 @@ function App() {
     setLyricsGameSong(song);
   };
 
-  // 通用選歌 UI (讓程式碼更短)
+  // 通用選歌 UI
   const SongSelector = ({ title, onSelect, icon, color }) => (
     <div className="w-full max-w-6xl px-4 z-10 flex flex-col items-center">
       <button onClick={() => scrollTo(trainSectionRef)} className="self-start text-white mb-6 hover:underline text-lg">↑ 返回火車</button>
@@ -72,6 +81,7 @@ function App() {
   return (
     <div className="w-full min-h-screen bg-folk-bg text-folk-dark font-serif overflow-x-hidden flex flex-col">
       
+      {/* Section 1: 首頁 */}
       <section ref={homeSectionRef} className="h-screen w-full flex flex-col items-center justify-center relative bg-folk-bg shrink-0">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center flex flex-col items-center">
           <h1 className="text-7xl font-bold tracking-widest mb-8 text-folk-dark">民歌旅程</h1>
@@ -80,14 +90,17 @@ function App() {
         </motion.div>
       </section>
 
+      {/* Section 2: 火車模式選擇 */}
       <section ref={trainSectionRef} className="h-screen w-full relative shrink-0">
         <TrainPage onSelectMode={handleModeSelect} onBack={handleBackToHome} />
       </section>
 
+      {/* Section 3: 互動/遊戲區 */}
       <section ref={gameSectionRef} className="h-screen w-full bg-gray-900 flex flex-col items-center justify-center relative shrink-0 overflow-hidden">
         
         {!activeMode && <div className="text-gray-500 text-2xl tracking-widest">請先在上方火車選擇一種體驗...</div>}
 
+        {/* A. 手勢 AR */}
         {activeMode === 'ar' && (
            <div className="w-full h-full relative">
              <button onClick={() => scrollTo(trainSectionRef)} className="absolute top-6 left-6 z-50 px-6 py-2 bg-black text-white border border-white/30 rounded-full hover:bg-white hover:text-black transition font-bold shadow-lg">↑ 返回火車</button>
@@ -95,6 +108,7 @@ function App() {
            </div>
         )}
 
+        {/* B. 歌詞拼貼 */}
         {activeMode === 'lyrics' && (
           <div className="w-full h-full flex flex-col items-center justify-center">
             {!lyricsGameSong ? (
@@ -108,6 +122,7 @@ function App() {
           </div>
         )}
 
+        {/* C. AI 映像 (Pollinations) */}
         {activeMode === 'ai' && (
            <div className="w-full h-full flex flex-col items-center justify-center">
              {!aiGameSong ? (
@@ -120,12 +135,27 @@ function App() {
            </div>
         )}
 
+        {/* D. AI 創作 (Local ComfyUI Z-Image) - 青色車廂 */}
+        {activeMode === 'ai-zimage' && (
+           <div className="w-full h-full flex flex-col items-center justify-center">
+             {!zimageSong ? (
+               <SongSelector title="請選擇要創作的歌曲 (Local GPU)" onSelect={setZimageSong} icon="🖥️" color="bg-cyan-600" />
+             ) : (
+               <div className="w-full h-full relative">
+                  <AiCoverGame_zimage song={zimageSong} onBack={() => setZimageSong(null)} />
+               </div>
+             )}
+           </div>
+        )}
+
+        {/* E. 3D 時光宿舍 */}
         {activeMode === '3d' && (
            <div className="w-full h-full relative">
              <DormGame onBack={() => scrollTo(trainSectionRef)} />
            </div>
         )}
 
+        {/* F. 聽見民歌 (AR 粒子) */}
         {activeMode === 'audio-ar' && (
            <div className="w-full h-full flex flex-col items-center justify-center">
              {!audioArSong ? (
@@ -138,6 +168,7 @@ function App() {
            </div>
         )}
 
+        {/* G. 民歌接龍 (KTV) */}
         {activeMode === 'karaoke' && (
            <div className="w-full h-full flex flex-col items-center justify-center">
              {!karaokeSong ? (
@@ -150,23 +181,45 @@ function App() {
            </div>
         )}
 
+        {/* H. 封面人物 (去背) */}
         {activeMode === 'photobooth' && (
            <div className="w-full h-full relative">
              <PhotoBoothGame onBack={() => scrollTo(trainSectionRef)} />
            </div>
         )}
 
-        {/* 新增：心情列車模式 (深紫色車廂) */}
+        {/* I. 心情列車 (3D+Face) */}
         {activeMode === 'mood-train' && (
            <div className="w-full h-full relative">
-             {/* 這個模式不需要先選歌，直接進 3D 場景 */}
              <MoodTrainGame onBack={() => scrollTo(trainSectionRef)} />
            </div>
         )}
-                {activeMode === 'faceswap' && (
+        
+        {/* J. 時光變臉 (A1111 ReActor) */}
+        {activeMode === 'faceswap' && (
           <div className="w-full h-full relative">
             <FaceSwapGame onBack={() => scrollTo(trainSectionRef)} />
           </div>
+        )}
+
+        {/* K. 時光變臉 (ComfyUI ReActor) - 尚未啟用，如果要用，請在 gameModes 加一個 faceswap-comfy id */}
+        {activeMode === 'faceswap-comfy' && (
+          <div className="w-full h-full relative">
+            <FaceSwapComfy onBack={() => scrollTo(trainSectionRef)} />
+          </div>
+        )}
+
+        {/* L. 時光膠囊 (HTML 下載) */}
+        {activeMode === 'capsule' && (
+           <div className="w-full h-full flex flex-col items-center justify-center">
+             {!capsuleSong ? (
+               <SongSelector title="請選擇要打包的歌曲" onSelect={setCapsuleSong} icon="🎁" color="bg-amber-500" />
+             ) : (
+               <div className="w-full h-full relative">
+                  <CapsuleGame song={capsuleSong} onBack={() => setCapsuleSong(null)} />
+               </div>
+             )}
+           </div>
         )}
 
       </section>

@@ -67,6 +67,21 @@ export const gameModes = [
     color: "bg-rose-700", // 深紅色
     icon: "🎭"
   },
+  // 新增：時光膠囊 (互動 HTML 下載)
+  {
+    id: 'capsule',
+    title: "時光膠囊",
+    description: "打包你的專屬回憶",
+    color: "bg-amber-500", 
+    icon: "🎁"
+  },
+  {
+  id: 'ai-zimage',
+  title: "AI 創作 (Local)",
+  description: "使用本地 ComfyUI 生成",
+  color: "bg-cyan-600",
+  icon: "🖥️"
+},
   {
     id: 'dev1',
     title: "開發中",

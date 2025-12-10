@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import Webcam from 'react-webcam';
 
-// !!! 記得填入新的 Ngrok 網址 !!!
+// !!! 請填入你的 Stable Diffusion Forge Neo 的網址 !!!
 const API_URL = "https://cory-uninduced-ozell.ngrok-free.dev"; 
 
 const TEMPLATES = [
@@ -9,13 +9,15 @@ const TEMPLATES = [
     id: 'spring',
     title: '拜訪春天',
     singer: '施孝榮',
-    imgSrc: '/images/cover-spring.jpg', 
+    imgSrc: '/images/cover-spring.jpg',
+    faceCount: 4, // ★ 設定這張圖有 4 張臉
   },
   {
     id: 'wood',
     title: '木棉道',
     singer: '王夢麟',
-    imgSrc: '/images/cover-wood.jpg', 
+    imgSrc: '/images/cover-wood.jpg',
+    faceCount: 1, // ★ 設定這張圖只有 1 張臉
   }
 ];
 
@@ -26,6 +28,7 @@ const FaceSwapGame = ({ onBack }) => {
   const [resultImage, setResultImage] = useState(null);
   const [base64Template, setBase64Template] = useState(null);
   const [debugImage, setDebugImage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 1. 載入模板
   const handleSelectTemplate = async (template) => {
@@ -35,23 +38,25 @@ const FaceSwapGame = ({ onBack }) => {
       const blob = await response.blob();
       const reader = new FileReader();
       reader.onloadend = () => {
-        setBase64Template(reader.result.split(',')[1]);
+        const base64String = reader.result.split(',')[1];
+        setBase64Template(base64String);
         setStep('capture');
       };
       reader.readAsDataURL(blob);
     } catch (err) {
       console.error("圖片載入失敗", err);
-      alert("無法載入封面圖");
+      alert("無法載入封面圖，請確認圖片路徑是否正確");
     }
   };
 
   // 2. 拍照
   const capture = async () => {
-    const imageSrc = webcamRef.current.getScreenshot({width: 512, height: 512}); // 強制截取 512x512
+    const imageSrc = webcamRef.current.getScreenshot({width: 512, height: 512}); 
     
     if (imageSrc && base64Template) {
       setDebugImage(imageSrc); 
       setStep('processing');
+      setIsLoading(true);
       
       const userFaceBase64 = imageSrc.split(',')[1]; 
       
@@ -59,27 +64,36 @@ const FaceSwapGame = ({ onBack }) => {
         await swapFace(userFaceBase64, base64Template);
       } catch (error) {
         console.error(error);
-        alert(`換臉失敗: ${error.message}\n請檢查後端 Log`);
+        alert(`換臉失敗: ${error.message}\n請確認 SD Forge 是否啟動且 ReActor 插件運作正常。`);
         setStep('capture');
+      } finally {
+        setIsLoading(false);
       }
     }
   };
 
-  // 3. 呼叫後端 API (改用 ReActor 獨立接口)
+  // 3. 呼叫 SD Forge ReActor API
   const swapFace = async (source, target) => {
     
-    // --- 設定多臉替換策略 ---
-    // 假設封面最多有 6 張臉 (拜訪春天有 4 張)，我們就準備 6 個指令
-    // source_faces_index: [0,0,0,0,0,0] -> 全部都用你的臉 (第0號臉)
-    // face_index: [0,1,2,3,4,5] -> 依序換掉封面上的第 0 到第 5 張臉
+    // ★★★ 關鍵修改：根據模板定義的臉部數量，動態生成指令 ★★★
+    const count = selectedTemplate.faceCount || 1; // 預設 1 張
     
+    // 產生來源臉部索引：全部都是 0 (因為只有你一張臉)
+    // 例如 4 張臉: [0, 0, 0, 0]
+    const sourceFacesIndex = Array(count).fill(0);
+    
+    // 產生目標臉部索引：0, 1, 2, 3...
+    // 例如 4 張臉: [0, 1, 2, 3]
+    const targetFacesIndex = Array.from({length: count}, (_, i) => i);
+
+    console.log(`正在替換 ${count} 張臉...`);
+
     const payload = {
       source_image: source,       
       target_image: target,       
       
-      // ★★★ 關鍵修改：從單一 [0] 改為多對應陣列 ★★★
-      source_faces_index: [0, 0, 0, 0, 0, 0], 
-      face_index: [0, 1, 2, 3, 4, 5],            
+      source_faces_index: sourceFacesIndex,
+      face_index: targetFacesIndex,         
       
       upscaler: "None",           
       scale: 1,
@@ -89,34 +103,37 @@ const FaceSwapGame = ({ onBack }) => {
       gender_target: 0
     };
 
-    console.log("正在發送請求至:", `${API_URL}/reactor/image`);
+    try {
+      const response = await fetch(`${API_URL}/reactor/image`, {
+        method: "POST",
+        headers: { 
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "69420" 
+        },
+        body: JSON.stringify(payload)
+      });
 
-    const response = await fetch(`${API_URL}/reactor/image`, {
-      method: "POST",
-      mode: 'cors', 
-      headers: { 
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "69420" 
-      },
-      body: JSON.stringify(payload)
-    });
+      if (!response.ok) {
+          const errorText = await response.text();
+          console.error("API Error Details:", errorText);
+          throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+      }
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("API Error Details:", errorText);
-        throw new Error(`API Error: ${response.status}`);
+      const data = await response.json();
+      
+      if (!data.image) {
+          throw new Error("後端處理完成但沒有回傳圖片");
+      }
+
+      const finalImage = `data:image/png;base64,${data.image}`;
+      setResultImage(finalImage);
+      setStep('result');
+
+    } catch (error) {
+      throw error;
     }
-
-    const data = await response.json();
-    
-    if (!data.image) {
-        throw new Error("後端處理完成但沒有回傳圖片");
-    }
-
-    const finalImage = `data:image/png;base64,${data.image}`;
-    setResultImage(finalImage);
-    setStep('result');
   };
+
   return (
     <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center relative p-4 text-white">
       
@@ -137,6 +154,10 @@ const FaceSwapGame = ({ onBack }) => {
                 <div className="p-4 text-center">
                   <h3 className="text-2xl font-bold">{t.title}</h3>
                   <p className="text-gray-400">{t.singer}</p>
+                  {/* 顯示這張圖有幾個人 */}
+                  <span className="text-xs bg-gray-700 px-2 py-1 rounded-full mt-2 inline-block">
+                     👥 {t.faceCount} 人合唱
+                  </span>
                 </div>
               </div>
             ))}
@@ -151,7 +172,7 @@ const FaceSwapGame = ({ onBack }) => {
             <Webcam
               ref={webcamRef}
               screenshotFormat="image/jpeg"
-              width={512} // 配合 API 需求，統一尺寸
+              width={512} 
               height={512}
               className="w-full h-full object-cover"
               mirrored={true}
@@ -174,6 +195,7 @@ const FaceSwapGame = ({ onBack }) => {
         <div className="text-center flex flex-col items-center">
           <div className="w-24 h-24 border-8 border-t-rose-500 border-white/20 rounded-full animate-spin mb-8"></div>
           <h2 className="text-4xl font-bold mb-4">AI 正在融合五官...</h2>
+          <p className="text-gray-400">正在處理 {selectedTemplate.faceCount} 張臉孔</p>
           
           <div className="flex gap-4 justify-center mt-4 opacity-50">
              <div className="text-center">
@@ -189,7 +211,7 @@ const FaceSwapGame = ({ onBack }) => {
         <div className="flex flex-col items-center gap-8 animate-fade-in w-full max-w-4xl">
           <h2 className="text-3xl font-bold text-white">換臉完成！</h2>
           
-          <div className="flex gap-8 items-center">
+          <div className="flex gap-8 items-center justify-center flex-wrap">
              <div className="hidden md:block opacity-50 scale-75">
                 <p className="text-center mb-2">原版</p>
                 <img src={selectedTemplate.imgSrc} className="h-64 rounded shadow-lg" alt="Original" />

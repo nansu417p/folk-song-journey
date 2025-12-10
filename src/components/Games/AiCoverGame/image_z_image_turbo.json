@@ -1,26 +1,36 @@
 {
   "9": {
     "inputs": {
-      "filename_prefix": "Z-Image-Gen",
+      "filename_prefix": "z-image",
       "images": [
         "43",
         0
       ]
     },
-    "class_type": "SaveImage"
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
   },
   "39": {
     "inputs": {
       "clip_name": "qwen_3_4b.safetensors",
-      "type": "sd3"
+      "type": "lumina2",
+      "device": "default"
     },
-    "class_type": "CLIPLoader"
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
   },
   "40": {
     "inputs": {
       "vae_name": "ae.safetensors"
     },
-    "class_type": "VAELoader"
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
   },
   "41": {
     "inputs": {
@@ -28,44 +38,53 @@
       "height": 512,
       "batch_size": 1
     },
-    "class_type": "EmptySD3LatentImage"
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "空Latent图像（SD3）"
+    }
   },
   "42": {
     "inputs": {
       "conditioning": [
-        "36",
+        "45",
         0
       ]
     },
-    "class_type": "ConditioningZeroOut"
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "条件零化"
+    }
   },
   "43": {
     "inputs": {
       "samples": [
-        "38",
+        "44",
         0
       ],
       "vae": [
-        "39",
+        "40",
         0
       ]
     },
-    "class_type": "VAEDecode"
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
   },
   "44": {
     "inputs": {
-      "seed": 0,
-      "steps": 4,
-      "cfg": 1.0,
-      "sampler_name": "euler_ancestral",
+      "seed": 277814598408393,
+      "steps": 3,
+      "cfg": 1,
+      "sampler_name": "res_multistep",
       "scheduler": "simple",
       "denoise": 1,
       "model": [
-        "40",
+        "47",
         0
       ],
       "positive": [
-        "41",
+        "45",
         0
       ],
       "negative": [
@@ -73,37 +92,49 @@
         0
       ],
       "latent_image": [
-        "43",
+        "41",
         0
       ]
     },
-    "class_type": "KSampler"
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
   },
   "45": {
     "inputs": {
-      "text": "positive prompt here",
+      "text": "將圖中男人換成女人",
       "clip": [
-        "44",
+        "39",
         0
       ]
     },
-    "class_type": "CLIPTextEncode"
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
   },
   "46": {
     "inputs": {
       "unet_name": "z_image_turbo_bf16.safetensors",
       "weight_dtype": "default"
     },
-    "class_type": "UNETLoader"
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
   },
   "47": {
     "inputs": {
       "shift": 3,
       "model": [
-        "37",
+        "46",
         0
       ]
     },
-    "class_type": "ModelSamplingAuraFlow"
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "采样算法（AuraFlow）"
+    }
   }
 }
